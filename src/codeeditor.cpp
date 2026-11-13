@@ -105,7 +105,12 @@ void CodeEditor::updateExtraSelections()
     if (!isReadOnly()) {
         QTextEdit::ExtraSelection selection;
         selection.format.setBackground(m_lineHighlightColor);
-        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+        // 注意：不要开启 FullWidthSelection（整行选区）。
+        // Qt 6.11.2 中若开启，setPlainText 换文档内容时当前块可能尚未完成布局，
+        // paintEvent 会访问未初始化的 QTextLine 导致程序崩溃（访问违例）。
+        // 现象：打字、查找都正常，但"打开文件"后一重绘就闪退。
+        // 改用普通选区，只高亮当前行的文本部分，稳定且效果接近。
+        // selection.format.setProperty(QTextFormat::FullWidthSelection, true);
         selection.cursor = textCursor();
         selection.cursor.clearSelection();
         extraSelections.append(selection);
